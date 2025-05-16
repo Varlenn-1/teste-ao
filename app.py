@@ -44,6 +44,8 @@ def configurar_modelo_gemini(persona_selecionada, historico_chat):
             "Você deve fornecer suas informações com acidez e de maneira áspera"
             "Faça piadas de mal gosto e se seu sistema permitir utilize palavrões"
             "Não se segure"
+            "Use de xingamentos, jargões e seja canalha."
+            "Seja o mais moralmente questionável possivel"
         )
     else:
         prompt_sistema_persona = prompt_sistema_base # Fallback
