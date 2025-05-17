@@ -334,6 +334,9 @@ if "historico_gemini" not in st.session_state:
 # Já inicializado acima antes da definição condicional das funções
 # if "agentes_ativos" not in st.session_state: st.session_state.agentes_ativos = False # Já está inicializado na seção condicional dos agentes
 
+if 'file_uploader_key' not in st.session_state:
+    st.session_state.file_uploader_key = 0
+
 # =============================================================================
 # Sidebar (Barra Lateral)
 # Onde ficam as opções e informações adicionais
@@ -399,21 +402,11 @@ with st.sidebar:
 # Variável para guardar a imagem carregada pelo usuário, começa como None (vazia)
 imagem_carregada = None
 # Cria um campo para o usuário fazer upload de um arquivo de imagem
-# Na seção de Gerenciamento de Estado:
-if 'file_uploader_key' not in st.session_state:
-    st.session_state.file_uploader_key = 0
-
-# Na seção de Interface Principal - Upload de Imagem:
 imagem_carregada_file = st.file_uploader(
     "Envie uma print do seu jogo (opcional):",
     type=["jpg", "jpeg", "png"],
     key=f"file_uploader_{st.session_state.file_uploader_key}" # Adiciona a chave dinâmica
 )
-
-# Dentro do bloco 'if prompt_usuario:' (após o processamento, antes de st.rerun()):
-# Incrementa a chave do file_uploader para limpá-lo na próxima execução
-st.session_state.file_uploader_key += 1
-# st.rerun() # Esta linha já deve existir
 
 # Se um arquivo de imagem foi carregado pelo usuário
 if imagem_carregada_file:
@@ -558,6 +551,7 @@ if prompt_usuario:
 
     # Esta linha apenas limpa a variável Python que segurava a imagem PIL.
     imagem_carregada = None
+    st.session_state.file_uploader_key += 1
 
     # Reinicia a aplicação Streamlit
     # Isso faz com que a página recarregue e exiba as novas mensagens no histórico
