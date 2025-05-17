@@ -18,10 +18,9 @@ from datetime import date # Importa date
 # =============================================================================
 # Configuração Inicial da Página Streamlit
 # Define o visual básico da sua aplicação web
-# MOVIDO PARA SER A PRIMEIRA INSTRUÇÃO Streamlit
 # =============================================================================
 # Configurações da página: layout mais largo, título que aparece na aba do navegador
-st.set_page_config(layout="wide", page_title="Imersão IA ChatGames")
+st.set_page_config(layout="wide", page_title="Ozy o Assistente")
 
 # =============================================================================
 # Configuração da API do Google Gemini
@@ -65,6 +64,7 @@ def call_agent(agent: Agent, message_text: str) -> str:
         # Usa uma combinação do nome do agente e user_id para garantir sessões únicas por agente/usuário
         session_id = f"{agent.name}_user1_session1"
         session = session_service.create_session(app_name=agent.name, user_id="user1", session_id=session_id)
+       
         # Cria um Runner para o agente
         runner = Runner(agent=agent, app_name=agent.name, session_service=session_service)
         # Cria o conteúdo da mensagem de entrada
@@ -78,7 +78,8 @@ def call_agent(agent: Agent, message_text: str) -> str:
                 for part in event.content.parts:
                     if part.text is not None:
                         final_response += part.text
-                        # final_response += "\n" # Remover quebra de linha extra se não for necessária
+               
+                # final_response += "\n" # Remover quebra de linha extra se não for necessária
 
         return final_response.strip() # Remove espaços em branco no início/fim
 
@@ -101,7 +102,7 @@ if "agentes_ativos" not in st.session_state:
 
 # Verifica se os agentes devem ser ativados com base no switch
 if st.session_state.agentes_ativos:
-    st.sidebar.success("Agentes de busca ativados! 🚀") # Mensagem visual na sidebar (aparece na re-execução após o clique)
+    st.sidebar.success("Pesquisador Ozy Ativo! 🚀") # Mensagem visual na sidebar (aparece na re-execução após o clique)
 
     # Agente de Simplificação
     # Função que usa um agente para simplificar o prompt do usuário para pesquisa
@@ -111,9 +112,7 @@ if st.session_state.agentes_ativos:
             name="agent_simplifier",
             model="gemini-2.0-flash",
             instruction="""
-            Sua única função é estruturar uma pergunta concisa e eficaz para ser utilizada em uma busca no Google.
-            Você deve sugerir APENAS a pergunta, sem nenhuma introdução, explicação ou texto adicional.
-            Garanta que a pergunta seja clara e diretamente relacionada ao prompt do usuário.
+            Sua única função é estruturar uma pergunta concisa e eficaz para ser utilizada em uma busca no Google. Você deve sugerir APENAS a pergunta, sem nenhuma introdução, explicação ou texto adicional. Garanta que a pergunta seja clara e diretamente relacionada ao prompt do usuário.
             Retorne somente UMA pergunta otimizada para busca.
             """,
             description="Agente que irá simplificar o prompt do usuário para busca.",
@@ -133,11 +132,20 @@ if st.session_state.agentes_ativos:
             name="agent_searcher",
             model="gemini-2.0-flash",
             instruction="""
-            Você é um agente especializado em realizar buscas no Google e retornar as informações mais relevantes e recentes encontradas.
-            Use a ferramenta 'google_search' para realizar a busca com o prompt fornecido pelo usuário.
-            Analise os resultados da busca e extraia a informação mais precisa e eficiente para responder à intenção original do usuário.
-            Retorne APENAS o conteúdo da pesquisa que seja relevante para a resposta final. Não inclua introduções, conclusões ou texto explicativo seu.
-            O objetivo é fornecer contexto de pesquisa para outra IA usar.
+            Você é um agente especializado em realizar buscas no Google e retornar as informações mais relevantes e recentes encontradas, **incluindo os links para as fontes originais**. Use a ferramenta 'Google Search' para realizar a busca com o prompt fornecido pelo usuário. Analise os resultados da busca e extraia a informação mais precisa e eficiente para responder à intenção original do usuário.
+
+            **Ao retornar a informação, formate-a de forma clara, incluindo o conteúdo relevante seguido pelo link da fonte.** Se houver múltiplos resultados relevantes, liste-os.
+
+            Exemplo de formato:
+            [Conteúdo relevante do resultado 1]
+            Link: https://lux.collections.yale.edu/view/results/objects?q=%7B%22carries%22%3A%7B%22id%22%3A%22https%3A%2F%2Flux.collections.yale.edu%2Fdata%2Ftext%2F8dd51862-ae2c-4829-8e16-19f134e7b0f4%22%7D%7D&openSearch=false
+
+            [Conteúdo relevante do resultado 2]
+            Link: https://englishgrammarhere.com/verbs/do-past-simple-simple-past-tense-of-do-past-participle-v1-v2-v3-form-of-do/
+
+            ...
+
+            Mantenha o foco em fornecer contexto de pesquisa útil para outra IA, garantindo que as fontes sejam facilmente identificáveis pelos links.
             """,
             description="Agente que irá realizar a pesquisa e retorno da pesquisa.",
             tools=[google_search]
@@ -162,8 +170,7 @@ if st.session_state.agentes_ativos:
 
 def configurar_modelo_gemini(persona_selecionada):
     """
-    Configura e retorna o modelo generativo com base na persona selecionada.
-    A instrução do sistema (persona) é definida aqui.
+    Configura e retorna o modelo generativo com base na persona selecionada. A instrução do sistema (persona) é definida aqui.
     O histórico de chat é gerenciado pelo objeto 'chat_session', não nesta função.
     """
     # Configurações de geração: controlam como a IA gera a resposta
@@ -176,9 +183,9 @@ def configurar_modelo_gemini(persona_selecionada):
     # Configurações de segurança: evitam que a IA gere conteúdo inadequado
     # Aqui estão configuradas para não bloquear nada (para fins de desenvolvimento/teste)
     safety_settings = {
-        'HATE': 'BLOCK_NONE',
-        'HARASSMENT': 'BLOCK_NONE',
-        'SEXUAL': 'BLOCK_NONE',
+        'HATE': 'BLOCK_ONLY_HIGH',
+        'HARASSMENT': 'BLOCK_ONLY_HIGH',
+        'SEXUAL': 'BLOCK_ONLY_HIGH',
         'DANGEROUS': 'BLOCK_NONE'
     }
 
@@ -193,7 +200,6 @@ def configurar_modelo_gemini(persona_selecionada):
 **Título do Agente:** Professor Ozy, Seu Amigo para Aprender a Jogar (Versão Super Simples!)
 
 **Função Primária:** Assistente *extremamente* paciente e especializado em explicar os jogos e como jogar, usando a linguagem mais simples do mundo, para pessoas mais velhas (como quem tem 60 anos ou mais) que nunca tiveram contato com videogames ou jogos complexos. Ele usa imagens e exemplos do dia a dia para facilitar tudo.
-
 **Personalidade:**
 
 - **Nome:** Professor Ozy
@@ -201,10 +207,9 @@ def configurar_modelo_gemini(persona_selecionada):
 - **Tom de Voz:** **Incrivelmente** amigável, carinhoso, calmo, paciente e muito encorajador. Fala como um bom amigo ou alguém da família explicando algo novo com muita atenção e sem pressa. O vocabulário é o mais básico e cotidiano possível.
 - **Habilidade Especial:** Conseguir olhar para uma imagem de um jogo (ou ouvir a pessoa descrever algo) e traduzir tudo para uma explicação tão clara e simples que qualquer pessoa, mesmo sem experiência nenhuma com tecnologia ou jogos, consiga entender na hora. É mestre em encontrar comparações com coisas da vida real.
 - **Objetivo:** Fazer com que o mundo dos jogos pareça acolhedor, divertido e *nada assustador* para pessoas mais velhas. Mostrar que jogar pode ser um passatempo relaxante, um exercício para a mente e uma fonte de alegria, explicando tudo no ritmo da pessoa.
-
 **Instruções Detalhadas:**
 
-1. **Análise Super Simples de Imagens/Situações:** Ao receber uma imagem de um jogo (uma tela, um botão, um personagem) ou ouvir uma descrição, Ozy o Guru deve olhar para ela e identificar *apenas* o que é crucial para a pessoa entender *agora*. Onde ela deve olhar? O que aquele desenho ou número significa? O que ela precisa fazer *agora*? Ignore detalhes que não são essenciais no momento.
+1. **Análise Super Simples de Imagens/Situações:** Ao receber uma imagem de um jogo (uma tela, um botão, um personagem) ou ouvir a pessoa descrever algo, Ozy o Guru deve olhar para ela e identificar *apenas* o que é crucial para a pessoa entender *agora*. Onde ela deve olhar? O que aquele desenho ou número significa? O que ela precisa fazer *agora*? Ignore detalhes que não são essenciais no momento.
 2. **Linguagem Mais Simples do Mundo:** **ESSA É A REGRA MAIS IMPORTANTE.** A linguagem deve ser *tão* simples que uma criança de 5 anos entenderia. **NUNCA** use jargões de jogos ou termos técnicos (como "interface", "HUD", "skill", "XP", "inventário", "loading", "lag"). Se precisar falar de algo como um menu, chame de "a tela com as opções" ou "o lugar onde você escolhe o que fazer". Se for inevitável usar um termo, explique-o com uma analogia *muito* simples logo em seguida.
 3. **Analogias do Dia a Dia (Abundantes!):** Use analogias *constantemente* para explicar os conceitos. Compare coisas do jogo com:
     - Tarefas domésticas (regar plantas = ganhar energia, arrumar algo = organizar inventário)
@@ -218,22 +223,11 @@ def configurar_modelo_gemini(persona_selecionada):
 6. **Assumir ZERO Conhecimento Prévio:** **ESSA TAMBÉM É CRUCIAL.** Parta do princípio que a pessoa não sabe *absolutamente nada* sobre como jogos funcionam, como usar um controle/teclado para jogar, o que são os elementos na tela, etc. Cada conceito, por mais simples que pareça para um jogador (como "mover o personagem", "pegar um item", "abrir o mapa"), deve ser explicado do zero, com muita calma.
 7. **Foco no Prazer, Relaxamento e Jornada:** Enfatize que o objetivo é relaxar, se divertir, curtir a história (se houver), ou simplesmente passar o tempo de forma agradável. Tire *toda* a pressão de "ser bom", "ganhar" ou "terminar o jogo rápido". O importante é curtir o processo de aprender e jogar. Compare a aprender a jogar com aprender um novo hobby que leva tempo e é gratificante.
 8. **Repetição e Reforço:** Não tenha medo de repetir conceitos importantes. Use analogias diferentes para o mesmo conceito se a primeira não ficou clara. Sempre reforce o que já foi aprendido.
-
 **Exemplo de Interação:**
 
 **Usuário:** Professor Ozy, eu tô vendo uma barra vermelha aqui embaixo da tela... o que é isso? E tem um número do lado. [Envia uma foto da tela de um jogo simples]
 
-**Professor Ozy:** Ah, meu caro amigo! Que bom que você notou isso! Veja bem, essa barra vermelha que você vê é como se fosse a sua *energia* ou o seu *fôlego* no jogo.
-
-Pense assim: é igual a bateria de um radinho pequeno, sabe? Quando a bateria tá cheia (a barra tá grandona), o seu personagem no jogo tá com toda a força e pronto para fazer as coisas!
-
-Conforme ele encontra algum desafio ou "cansa" um pouquinho (no jogo, isso pode ser levar um "golpe" ou fazer uma ação difícil), essa barra vermelha vai diminuindo, igual a bateria que vai acabando.
-
-Se a barra vermelha diminuir até o fim, significa que a energia acabou por agora. É como precisar sentar e descansar um pouco antes de continuar!
-
-O número do lado, muitas vezes, mostra *quantas* vezes você ainda pode "descansar" ou tentar de novo antes de precisar começar essa parte de novo. É como ter "vidas" extras, igual num jogo de tabuleiro que você tem peças de reserva!
-
-Não se preocupe em esvaziar a barra, faz parte de aprender! Estamos juntos nessa jornada, passo a passo! Muito bem por ter percebido essa barra! O que mais você vê na tela que te deixa curioso?
+**Professor Ozy:** Ah, meu caro amigo! Que bom que você notou isso! Veja bem, essa barra vermelha que você vê é como se fosse a sua *energia* ou o seu *fôlego* no jogo. Pense assim: é igual a bateria de um radinho pequeno, sabe? Quando a bateria tá cheia (a barra tá grandona), o seu personagem no jogo tá com toda a força e pronto para fazer as coisas! Conforme ele encontra algum desafio ou "cansa" um pouquinho (no jogo, isso pode ser levar um "golpe" ou fazer uma ação difícil), essa barra vermelha vai diminuindo, igual a bateria que vai acabando. Se a barra vermelha diminuir até o fim, significa que a energia acabou por agora. É como precisar sentar e descansar um pouco antes de continuar! O número do lado, muitas vezes, mostra *quantas* vezes você ainda pode "descansar" ou tentar de novo antes de precisar começar essa parte de novo. É como ter "vidas" extras, igual num jogo de tabuleiro que você tem peças de reserva! Não se preocupe em esvaziar a barra, faz parte de aprender! Estamos juntos nessa jornada, passo a passo! Muito bem por ter percebido essa barra! O que mais você vê na tela que te deixa curioso?
 """
         )
     elif persona_selecionada == "Ozy o Guru":
@@ -251,32 +245,23 @@ Não se preocupe em esvaziar a barra, faz parte de aprender! Estamos juntos ness
 - **Tom de Voz:** Cômico, um tanto excêntrico e teatral, como um "guru" que atingiu a "iluminação" nos jogos. Usa um vocabulário que mescla termos técnicos de jogos com metáforas e frases típicas de um guru, sempre com bom humor e foco em guiar o usuário para a "maestria".
 - **Habilidade Especial:** Capacidade de analisar informações complexas (texto e imagem) relacionadas a jogos e, principalmente, de *buscar e recomendar* tutoriais em vídeo de fontes confiáveis online que abordem o tópico do usuário em profundidade. Consegue estruturar guias textuais detalhados para jogadores avançados.
 - **Objetivo:** Ajudar jogadores experientes a transcenderem suas habilidades atuais, dominarem aspectos complexos dos jogos, otimizarem seu desempenho e descobrirem os caminhos para a "maestria" total, tudo isso com um toque de diversão e iluminação gamer.
-
 **Instruções Detalhadas:**
 
 1. **Análise de Informação Avançada:** Ao receber texto ou uma imagem, Ozy o Guru deve ser capaz de identificar elementos complexos relevantes para jogadores experientes, como interfaces de builds detalhadas, árvores de habilidades específicas, rotas de speedrun, posicionamentos táticos avançados, estatísticas ocultas, configurações de otimização gráfica/de performance, ou descrições de estratégias complexas. A análise é voltada para o *como* otimizar e dominar, não para o básico.
 2. **Linguagem para Iniciados:** Utilize a linguagem técnica e gírias comuns no universo dos jogos (termos como "meta", "build", "DPS", "CC", "farming", "pull", "agro", etc.). Assuma que o usuário entende esses termos. Explique um conceito *apenas* se for algo extremamente nichado, novo ou se o usuário pedir explicitamente. O tom deve ser engajador e divertido, com o toque do guru.
 3. **Contextualização Estratégica:** Contextualize os elementos analisados dentro de um quadro estratégico ou tático mais amplo e avançado. Explique *por que* uma certa build funciona bem em alto nível, a lógica por trás de uma estratégia complexa, ou a importância de uma mecânica específica para a otimização do jogo.
-4. **Busca e Recomendação de Vídeos:** Quando a solicitação do usuário envolver um tópico complexo que se beneficia de demonstração visual (como uma rota complexa, timing de habilidades, execução de combos, etc.), Ozy o Guru deve *procurar* por tutoriais em vídeo relevantes e de boa qualidade online (priorizando plataformas como YouTube). Apresente os resultados como recomendações, talvez com um breve resumo do que o vídeo cobre e um link direto.
+4. **Busca e Recomendação de Vídeos:** Quando a solicitação do usuário envolver um tópico complexo que se beneficia de demonstração visual (como uma rota complexa, timing de habilidades, execução de combos, etc.), Ozy o Guru deve *procurar* por tutoriais em vídeo relevantes e de boa qualidade online. Apresente os resultados como recomendações, talvez com um breve resumo do que o vídeo cobre e um link direto.
 5. **Criação de Guias Detalhados:** Para tópicos que podem ser bem explicados via texto ou imagem, estruture tutoriais ou guias passo a passo *detalhados* e focados em aspectos avançados. Organize as informações de forma lógica para alguém que já domina o básico do jogo.
 6. **Humor e Persona de Guru:** Mantenha consistentemente a persona de Ozy o Guru. As respostas devem conter elementos cômicos, frases de "iluminação gamer", metáforas engraçadas relacionadas à jornada do jogador em busca da maestria. O humor deve ser leve e servir para tornar as informações avançadas mais digestas e divertidas.
 7. **Assumir Conhecimento Base:** *Diferente do Professor Ozy para iniciantes*, Ozy o Guru *deve* assumir que o usuário já possui um conhecimento sólido dos controles básicos, objetivos primários e mecânicas fundamentais do jogo. Se o usuário fizer uma pergunta surpreendentemente básica, reaja com um humor suave (ex: "Hmmm, parece que a jornada ainda está nos passos iniciais, meu padawan gamer!"), mas ainda assim forneça a resposta de forma concisa e rapidamente volte para tópicos mais avançados ou pergunte se o usuário precisa de mais base.
 8. **Foco na Maestria e Otimização:** O objetivo primordial não é apenas a diversão casual, mas sim a busca pela excelência, otimização e domínio completo do jogo. Incentive a prática, a experimentação com táticas avançadas e a análise profunda.
 9. **Lidar com Ambiguidade:** Jogadores experientes podem fazer perguntas complexas ou usar jargões específicos de comunidades. Ozy o Guru deve tentar interpretar a solicitação da melhor forma possível, pedindo esclarecimentos (com humor) se necessário, mas sempre direcionando a resposta para o nível de conhecimento avançado esperado.
-
 **Exemplo de Interação:**
 
 **Usuário:** Ozy, estou tendo problemas pra otimizar meu ciclo de habilidades como 'Mago Arcano' em World of Warcraft para raids. Tenho um print da minha UI e meus talentos aqui [anexo imagem]. Como faço pra maximizar meu DPS?
+**Ozy o Guru:** Ah, aspirante a arquimago! Buscando a verdadeira iluminação do dano arcano, é? Vejo sua configuração... Hmmm, seus talentos mostram potencial, mas a rotação é o segredo dos antigos magos! Para maximizar seu DPS, a meditação (ou seja, sua rotação!) deve ser perfeita. Primeiramente, foque em manter o 'Poder Arcano' alto. Use 'Explosão Arcana' para acumular cargas rapidamente, mas cuide da sua mana como um monge cuida de seu chi! 'Mísseis Arcanos' e 'Barragem Arcana' são suas ferramentas de purificação de mana e dano concentrado. Durante suas fases de explosão ('Burn Phase'), alinhe seus 'Potenciamento Arcano' com outros CDs (cooldowns) importantes. É um momento de transcender o medo do esvaziamento de mana!
 
-**Ozy o Guru:** Ah, aspirante a arquimago! Buscando a verdadeira iluminação do dano arcano, é? Vejo sua configuração... Hmmm, seus talentos mostram potencial, mas a rotação é o segredo dos antigos magos!
-
-Para maximizar seu DPS, a meditação (ou seja, sua rotação!) deve ser perfeita. Primeiramente, foque em manter o 'Poder Arcano' alto. Use 'Explosão Arcana' para acumular cargas rapidamente, mas cuide da sua mana como um monge cuida de seu chi! 'Mísseis Arcanos' e 'Barragem Arcana' são suas ferramentas de purificação de mana e dano concentrado.
-
-Durante suas fases de explosão ('Burn Phase'), alinhe seus 'Potenciamento Arcano' com outros CDs (cooldowns) importantes. É um momento de transcender o medo do esvaziamento de mana!
-
-Vejo que você usa um addon de rastreamento... excelente! Mantenha um olho no proc de 'Mísseis Arcanos'. É um presente dos céus arcanos, use-o sabiamente para canalizar dano enquanto recupera mana com 'Evocação'.
-
-Buscar a perfeição nesta arte requer prática. Para uma demonstração visual da rotação em ação, medite sobre estes pergaminhos digitais (tutoriais em vídeo):
+Vejo que você usa um addon de rastreamento... excelente! Mantenha um olho no proc de 'Mísseis Arcanos'. É um presente dos céus arcanos, use-o sabiamente para canalizar dano enquanto recupera mana com 'Evocação'. Buscar a perfeição nesta arte requer prática. Para uma demonstração visual da rotação em ação, medite sobre estes pergaminhos digitais (tutoriais em vídeo):
 
 - **[Link YouTube 1]: Guia Completo Rotação Mago Arcano 10.2 - WOW** (Mostra a rotação básica e avançada)
 - **[Link YouTube 2]: Análise de Log de Raid Mago Arcano - Otimização de DPS** (Para quem busca a iluminação máxima na análise!)
@@ -299,8 +284,8 @@ Lembre-se, a maestria não é apenas na rotação, mas na sua adaptação a cada
     return model
 
 # =============================================================================
-# Configuração Inicial da Página Streamlit
-# Define o visual básico da sua aplicação web
+# Configuração Inicial da Página Streamlit (repetido, pode ser removido)
+# Já foi configurado no início do script com st.set_page_config
 # =============================================================================
 
 # Título principal exibido na página
@@ -334,8 +319,11 @@ if "historico_gemini" not in st.session_state:
 # Já inicializado acima antes da definição condicional das funções
 # if "agentes_ativos" not in st.session_state: st.session_state.agentes_ativos = False # Já está inicializado na seção condicional dos agentes
 
-if 'file_uploader_key' not in st.session_state:
-    st.session_state.file_uploader_key = 0
+# --- Adicionado para controlar a limpeza do uploader usando chave dinâmica ---
+# Inicializa o contador para a chave dinâmica do uploader
+if "uploader_key_counter" not in st.session_state:
+    st.session_state.uploader_key_counter = 0
+# --- Fim da adição ---
 
 # =============================================================================
 # Sidebar (Barra Lateral)
@@ -344,8 +332,8 @@ if 'file_uploader_key' not in st.session_state:
 
 # Inicia um bloco de código que será exibido na barra lateral
 with st.sidebar:
-    st.markdown("## ✨ ChatGames IA ✨") # Título na sidebar
-    st.markdown("Selecione as opções abaixo:") # Texto explicativo
+    st.markdown("## ✨ Ozy o Assistente ✨") # Título na sidebar
+    st.markdown("Configurações do Ozy:") # Texto explicativo
     st.markdown("---") # Linha divisória
 
     st.subheader("ESCOLHA A PERSONALIDADE:") # Subtítulo
@@ -362,25 +350,27 @@ with st.sidebar:
 
     st.markdown("---")
 
+     # Descrições curtas de cada persona na sidebar
+    st.markdown("👨‍🏫 **Professor Ozy:**", unsafe_allow_html=True)
+    st.write("Ideal para quem está começando, explica de forma clara e sem jargões. Excelente pra quem quer aprender a jogar com os filhos ou apenas aproveitar o mundo dos jogos sem complicações.")
+
+    st.markdown("🧙‍♂️ **Ozy o Guru:**", unsafe_allow_html=True)
+    st.write("Ideal para Gamers experientes e que buscam reduzir o tempo na procura de tutoriais e outros conteúdos.")
+
+    st.markdown("---")
+
     # Adiciona o Switch (checkbox) para ativar/desativar os agentes
     st.subheader("OPÇÕES AVANÇADAS:")
     st.session_state.agentes_ativos = st.checkbox(
-        "Ativar Agentes de Busca e Simplificação",
+        "Ativar o Pesquisador Ozy",
         value=st.session_state.agentes_ativos, # Define o estado inicial do checkbox
         key="agentes_checkbox" # Chave para persistir o estado do checkbox
     )
-    st.write("*(Requer biblioteca 'google-ai-generative-agents')*")
+    st.write("*(Caso queira respostas mais acertivas ative essa opção. Mas a resposta pode levar alguns segundos a mais para ser enviada.)*")
 
     st.markdown("---")
 
-    # Descrições curtas de cada persona na sidebar
-    st.markdown("👨‍🏫 **Professor Ozy:**", unsafe_allow_html=True)
-    st.write("Ideal para quem está começando, explica de forma clara e sem jargões.")
-
-    st.markdown("🧙‍♂️ **Ozy o Guru:**", unsafe_allow_html=True)
-    st.write("Mais direto e com humor, focado em dicas avançadas.")
-
-    st.markdown("---")
+   
 
     # Botão para limpar o histórico da persona ATUALMENTE selecionada
     if st.button(f"🔄 Limpar Histórico ({st.session_state.persona_selecionada})"):
@@ -388,35 +378,39 @@ with st.sidebar:
         st.session_state.historico_chat[st.session_state.persona_selecionada] = []
         # Limpa o objeto chat_session da API Gemini para a persona atual
         st.session_state.historico_gemini[st.session_state.persona_selecionada] = None
-        # Reinicia a aplicação Streamlit para refletir a mudança
+        # Incrementa o contador para gerar uma nova chave para o uploader na próxima execução
+        st.session_state.uploader_key_counter += 1
+        # Reinicia a aplicação Streamlit para refletir a mudança e limpar o uploader
         st.rerun()
 
-    st.markdown("---")
-    st.markdown("Projeto para a **Imersão IA Alura**")
 
 # =============================================================================
 # Interface Principal - Upload de Imagem e Histórico do Chat
 # Onde o usuário interage diretamente com a IA
 # =============================================================================
 
+# Cria um contêiner (uma área) com altura fixa e barra de rolagem para o chat
+chat_container = st.container(height=400)
+
 # Variável para guardar a imagem carregada pelo usuário, começa como None (vazia)
 imagem_carregada = None
 # Cria um campo para o usuário fazer upload de um arquivo de imagem
-imagem_carregada_file = st.file_uploader(
+# Usamos a chave dinâmica gerada pelo contador para forçar o reset
+uploaded_file = st.file_uploader(
     "Envie uma print do seu jogo (opcional):",
     type=["jpg", "jpeg", "png"],
-    key=f"file_uploader_{st.session_state.file_uploader_key}" # Adiciona a chave dinâmica
+    key=f"image_uploader_{st.session_state.uploader_key_counter}" # Chave dinâmica
 )
 
-# Se um arquivo de imagem foi carregado pelo usuário
-if imagem_carregada_file:
+# Se um arquivo de imagem foi carregado pelo usuário nesta execução
+if uploaded_file:
     # Abre a imagem usando a biblioteca Pillow
-    imagem_carregada = Image.open(imagem_carregada_file)
+    imagem_carregada = Image.open(uploaded_file)
     # Exibe a imagem carregada na interface
     st.image(imagem_carregada, caption="Imagem carregada.", width=300)
 
-# Cria um contêiner (uma área) com altura fixa e barra de rolagem
-chat_container = st.container(height=400)
+
+
 
 # Pega o histórico de mensagens específico da persona que está selecionada no momento
 historia_da_persona_atual = st.session_state.historico_chat.get(st.session_state.persona_selecionada, [])
@@ -433,13 +427,14 @@ with chat_container:
             if "image" in mensagem and mensagem["image"] is not None:
                 st.image(mensagem["image"], width=200)
 
+
 # =============================================================================
 # Entrada de Texto do Usuário
 # Onde o usuário digita sua pergunta
 # =============================================================================
 
 # Cria a caixa de texto na parte inferior da tela onde o usuário digita a mensagem
-prompt_usuario = st.chat_input(f"Converse com {st.session_state.persona_selecionada}...")
+prompt_usuario = st.chat_input(f"Converse com {st.session_state.persona_selecionada}...", key="chat_input")
 
 
 # =============================================================================
@@ -458,29 +453,31 @@ if prompt_usuario:
     # Só executa se o Switch na sidebar estiver ativado
     # =============================================================================
     if st.session_state.agentes_ativos:
-        st.info("Agentes ativados: Simplificando e buscando...")
+        st.info("Pesquisador Ozy trabalhando...")
         try:
             # Chama o agente para simplificar o prompt
             simplified_prompt = agent_simplifier(prompt_usuario)
-            st.text(f"Prompt simplificado pelo agente: {simplified_prompt}") # Exibe o prompt simplificado (opcional para debug)
+            st.text(f"Criando um prompt limpinho: {simplified_prompt}") # Exibe o prompt simplificado (opcional para debug)
 
             # Chama o agente para realizar a busca com o prompt simplificado
             # Passa a data atual (embora o agente não a use neste código)
             search_result = agent_searcher(simplified_prompt)
             # st.text(f"Resultado da busca do agente: {search_result}") # Exibe o resultado da busca (opcional para debug)
         except Exception as e:
-            st.error(f"Erro durante a execução dos agentes: {e}")
+            st.error(f"Erro durante a execução do Pesquisador: {e}")
             search_result = "Erro na busca." # Define um resultado de erro
-        st.info("Busca com agentes finalizada.")
+        st.info("Pesquisador Ozy terminou.")
     else:
-        print("Agentes de busca desativados.") # Mensagem para o console
+        print("Pesquizador Ozy foi desativado.") # Mensagem para o console
 
     # Prepara o conteúdo que será enviado para o modelo Gemini
     # Inclui o prompt do usuário e, se houver, a imagem e o resultado da busca dos agentes
     conteudo_para_enviar = []
 
     # Se uma imagem foi carregada, adiciona ela ao início da lista de conteúdo
-    if imagem_carregada:
+    # Usamos 'uploaded_file' para verificar se um arquivo foi carregado nesta interação
+    if uploaded_file:
+        # A imagem já foi aberta em 'imagem_carregada' logo após o uploader
         conteudo_para_enviar.append(imagem_carregada) # Adiciona a imagem
 
     # Adiciona o prompt original do usuário
@@ -519,9 +516,11 @@ if prompt_usuario:
 
     # Adiciona a mensagem do usuário ao histórico de mensagens para exibição
     mensagem_usuario_para_exibir = {"role": "user", "content": prompt_usuario, "persona": "Você"}
-    if imagem_carregada:
-        mensagem_usuario_para_exibir["image"] = imagem_carregada
+    # Adiciona a imagem ao histórico de exibição APENAS se ela foi carregada nesta interação
+    if uploaded_file: # Usa uploaded_file para verificar se um arquivo foi submetido
+        mensagem_usuario_para_exibir["image"] = imagem_carregada # Adiciona a imagem aberta
     st.session_state.historico_chat[persona_atual].append(mensagem_usuario_para_exibir)
+
 
     # Exibe um indicador de carregamento enquanto a IA está processando
     with st.spinner(f"{persona_atual} está digitando..."):
@@ -544,17 +543,11 @@ if prompt_usuario:
         "persona": persona_atual
     })
 
-    # Limpa a variável da imagem carregada para não reprocessá-la
-    # A imagem já foi adicionada ao histórico de exibição, se for o caso.
-    # Não é necessário limpar a variável global 'imagem_carregada_file' diretamente.
-    # st.session_state.imagem_carregada_file = None # Isso não funciona diretamente para file_uploader
+    # --- Lógica para limpar o coletor de imagens após o envio usando chave dinâmica ---
+    # Incrementa o contador para gerar uma nova chave para o uploader na próxima execução
+    st.session_state.uploader_key_counter += 1
+    st.rerun() # Força a reexecução para aplicar a nova chave e limpar o uploader
+    # --- Fim da lógica de limpeza ---
 
-   
-     # *** Insira o incremento da chave AQUI ***
-    # Incrementa a chave do file_uploader para limpá-lo na próxima execução
-    st.session_state.file_uploader_key += 1
-    print(f"DEBUG: file_uploader_key incrementado para: {st.session_state.file_uploader_key}") # Debugging
-
-    # Reinicia a aplicação Streamlit
-    # Isso faz com que a página recarregue e exiba as novas mensagens no histórico
-    st.rerun()
+    # O st.rerun() que estava aqui pode ser removido ou substituído pelo st.experimental_rerun() acima
+    # st.rerun() # Removido
