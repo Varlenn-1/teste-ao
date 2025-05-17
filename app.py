@@ -549,9 +549,11 @@ if prompt_usuario:
     # Não é necessário limpar a variável global 'imagem_carregada_file' diretamente.
     # st.session_state.imagem_carregada_file = None # Isso não funciona diretamente para file_uploader
 
-    # Esta linha apenas limpa a variável Python que segurava a imagem PIL.
-    imagem_carregada = None
+   
+     # *** Insira o incremento da chave AQUI ***
+    # Incrementa a chave do file_uploader para limpá-lo na próxima execução
     st.session_state.file_uploader_key += 1
+    print(f"DEBUG: file_uploader_key incrementado para: {st.session_state.file_uploader_key}") # Debugging
 
     # Reinicia a aplicação Streamlit
     # Isso faz com que a página recarregue e exiba as novas mensagens no histórico
