@@ -542,6 +542,9 @@ if prompt_usuario:
     # Não é necessário limpar a variável global 'imagem_carregada_file' diretamente.
     # st.session_state.imagem_carregada_file = None # Isso não funciona diretamente para file_uploader
 
+    # Esta linha apenas limpa a variável Python que segurava a imagem PIL.
+    imagem_carregada = None
+
     # Reinicia a aplicação Streamlit
     # Isso faz com que a página recarregue e exiba as novas mensagens no histórico
     st.rerun()
